@@ -1,8 +1,16 @@
 name: Publish
 
+# on:
+#   release:
+#     types: [published]
+
 on:
-  release:
-    types: [published]
+  pull_request:
+    branches:
+      - "main"
+  push:
+    branches:
+      - "main"
 
 defaults:
   run:
