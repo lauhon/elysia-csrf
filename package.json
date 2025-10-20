@@ -16,15 +16,14 @@
     "cookie",
     "xsrf"
   ],
-  "author": "",
+  "author": "laurenz.honauer@gmail.com",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/elysia-csrf.git"
+    "url": "https://github.com/lauhon/elysia-csrf.git"
   },
   "scripts": {
-    "test": "bun run test.ts",
-    "example": "bun run example.ts"
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/bun": "latest"
