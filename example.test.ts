@@ -1,8 +1,11 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { Elysia } from "elysia";
 import { csrf } from "./src/index";
 
 describe("Elysia CSRF Plugin", () => {
+  afterEach(async () => {
+    await Bun.sleep(20);
+  });
   test("should initialize plugin correctly", () => {
     expect(() => {
       new Elysia().use(csrf({ cookie: true }));
