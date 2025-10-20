@@ -1,0 +1,40 @@
+{
+  "name": "elysia-csrf",
+  "version": "1.0.0",
+  "description": "CSRF protection plugin for Elysia with cookie-based token storage",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "type": "module",
+  "keywords": [
+    "elysia",
+    "csrf",
+    "security",
+    "middleware",
+    "plugin",
+    "bun",
+    "cookie",
+    "xsrf"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/elysia-csrf.git"
+  },
+  "scripts": {
+    "test": "bun run test.ts",
+    "example": "bun run example.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5",
+    "elysia": "^1.4.0"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ]
+}
