@@ -203,6 +203,9 @@ export const csrf = (options: CsrfOptions = {}) => {
 
   return new Elysia({
     name: "csrf",
+    seed: {
+      options,
+    },
   })
     .derive({ as: "global" }, ({ cookie }) => {
       let secret: string | undefined;
