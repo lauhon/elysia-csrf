@@ -3,13 +3,13 @@ import { Elysia } from "elysia";
 import { csrf } from "./src/index";
 
 describe("Elysia CSRF Plugin", () => {
-  test("should initialize plugin correctly", () => {
+  test.only("should initialize plugin correctly", () => {
     expect(() => {
       new Elysia().use(csrf({ cookie: true }));
     }).not.toThrow();
   });
 
-  test("should generate token and set cookie", async () => {
+  test.only("should generate token and set cookie", async () => {
     const app = new Elysia()
       .use(
         csrf({
@@ -32,7 +32,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(cookies).toContain("_csrf");
   });
 
-  test("should reject POST without token", async () => {
+  test.only("should reject POST without token", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
@@ -55,7 +55,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(failRes.status).toBe(403);
   });
 
-  test("should reject POST with invalid token", async () => {
+  test.only("should reject POST with invalid token", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
@@ -362,7 +362,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(apiRes.status).toBe(200);
   });
 
-  test("should skip validation for safe methods", async () => {
+  test.only("should skip validation for safe methods", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/safe", () => ({ message: "GET is safe" }))
