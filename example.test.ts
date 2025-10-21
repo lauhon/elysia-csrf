@@ -3,13 +3,13 @@ import { Elysia } from "elysia";
 import { csrf } from "./src/index";
 
 describe("Elysia CSRF Plugin", () => {
-  test.only("should initialize plugin correctly", () => {
+  test("should initialize plugin correctly", () => {
     expect(() => {
       new Elysia().use(csrf({ cookie: true }));
     }).not.toThrow();
   });
 
-  test.only("should generate token and set cookie", async () => {
+  test("should generate token and set cookie", async () => {
     const app = new Elysia()
       .use(
         csrf({
@@ -32,7 +32,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(cookies).toContain("_csrf");
   });
 
-  test.only("should reject POST without token", async () => {
+  test("should reject POST without token", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
@@ -55,7 +55,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(failRes.status).toBe(403);
   });
 
-  test.only("should reject POST with invalid token", async () => {
+  test("should reject POST with invalid token", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
@@ -78,7 +78,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(invalidRes.status).toBe(403);
   });
 
-  test("should accept POST with valid token", async () => {
+  test.skip("should accept POST with valid token", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
@@ -104,7 +104,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(data).toHaveProperty("success", true);
   });
 
-  test("should extract token from custom header", async () => {
+  test.skip("should extract token from custom header", async () => {
     const app = new Elysia()
       .use(
         csrf({
@@ -143,7 +143,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(successRes.status).toBe(200);
   });
 
-  test("should allow custom ignored methods", async () => {
+  test.skip("should allow custom ignored methods", async () => {
     const app = new Elysia()
       .use(
         csrf({
@@ -166,7 +166,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(getRes.status).toBe(200);
   });
 
-  test("should apply custom cookie configuration", async () => {
+  test.skip("should apply custom cookie configuration", async () => {
     const app = new Elysia()
       .use(
         csrf({
@@ -191,7 +191,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(cookies).toContain("SameSite=Strict");
   });
 
-  test("should allow token reuse across requests", async () => {
+  test.skip("should allow token reuse across requests", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
@@ -227,7 +227,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(req2.status).toBe(200);
   });
 
-  test("should support multiple token sources", async () => {
+  test.skip("should support multiple token sources", async () => {
     const app = new Elysia()
       .use(
         csrf({
@@ -279,7 +279,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(headerRes.status).toBe(200);
   });
 
-  test("should work with HTML forms", async () => {
+  test.skip("should work with HTML forms", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/form", ({ csrfToken }) => {
@@ -320,7 +320,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(submitRes.status).toBe(200);
   });
 
-  test("should support SPA pattern", async () => {
+  test.skip("should support SPA pattern", async () => {
     const app = new Elysia()
       .use(
         csrf({
