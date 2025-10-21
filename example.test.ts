@@ -362,7 +362,7 @@ describe("Elysia CSRF Plugin", () => {
     expect(apiRes.status).toBe(200);
   });
 
-  test.only("should skip validation for safe methods", async () => {
+  test("should skip validation for safe methods", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))
       .get("/safe", () => ({ message: "GET is safe" }))
