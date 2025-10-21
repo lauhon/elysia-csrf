@@ -199,15 +199,14 @@ export const csrf = (options: CsrfOptions = {}) => {
   const getValue = options.value ?? defaultValue;
 
   const cookieKey = cookieConfig?.key ?? "_csrf";
-  const secretKey = options.secret ?? "csrfSecret";
 
   return new Elysia({
     name: "csrf",
+    seed: {
+      options,
+    },
   })
-    .derive({ as: "global" }, ({ cookie }) => {
-      let secret: string | undefined;
-      let token: string | undefined;
-
+    .derive({ as: "scoped" }, ({ cookie }) => {
       // Helper to set cookie attributes
       const setCookieAttributes = (cookieValue: any) => {
         if (cookieConfig?.path) cookieValue.path = cookieConfig.path;
@@ -221,43 +220,35 @@ export const csrf = (options: CsrfOptions = {}) => {
         if (cookieConfig?.domain) cookieValue.domain = cookieConfig.domain;
       };
 
-      // Get or generate secret
-      if (cookieConfig) {
-        // Cookie-based storage - get current value
-        const currentValue = (cookie as any)[cookieKey]?.value;
-        secret = currentValue ? String(currentValue) : undefined;
-
-        if (!secret) {
-          secret = generateSecret(secretLength);
-          // Set cookie with all attributes
-          (cookie as any)[cookieKey].value = secret;
-          setCookieAttributes((cookie as any)[cookieKey]);
-        }
-      }
-
-      // Token generation function
-      const csrfToken = (): string => {
+      // Helper to get or create secret from cookie
+      const getOrCreateSecret = (): string => {
         if (!cookieConfig) {
           throw new Error("CSRF: Cookie storage must be enabled");
         }
 
-        let currentSecret = secret;
+        // Elysia cookies are proxy objects, we can directly access .value
+        // The cookie object itself is never undefined, but .value can be
+        const cookieObj = cookie[cookieKey] as any;
+        const currentValue = cookieObj.value;
+        let secret = currentValue ? String(currentValue) : undefined;
 
-        if (!currentSecret) {
-          currentSecret = generateSecret(secretLength);
-          (cookie as any)[cookieKey].value = currentSecret;
-          setCookieAttributes((cookie as any)[cookieKey]);
-          secret = currentSecret;
+        // If no secret exists, generate one
+        if (!secret) {
+          secret = generateSecret(secretLength);
+          cookieObj.value = secret;
+          setCookieAttributes(cookieObj);
         }
 
-        // Use cached token if secret hasn't changed
-        if (token && currentSecret === secret) {
-          return token;
-        }
+        return secret;
+      };
 
-        // Generate new token
+      // Token generation function
+      const csrfToken = (): string => {
+        const secret = getOrCreateSecret();
+
+        // Generate new token with new salt each time
         const salt = randomString(saltLength);
-        token = tokenize(currentSecret, salt);
+        const token = tokenize(secret, salt);
 
         return token;
       };
@@ -267,7 +258,7 @@ export const csrf = (options: CsrfOptions = {}) => {
       };
     })
     .onBeforeHandle(
-      { as: "global" },
+      { as: "scoped" },
       async ({ request, cookie, body, query }) => {
         const method = request.method.toUpperCase();
 
@@ -276,12 +267,16 @@ export const csrf = (options: CsrfOptions = {}) => {
           return;
         }
 
-        // Get secret from cookie
-        let secret: string | undefined;
-        if (cookieConfig) {
-          const cookieValue = (cookie as any)[cookieKey]?.value;
-          secret = cookieValue ? String(cookieValue) : undefined;
+        // Get secret from cookie - ensure it's always read fresh
+        if (!cookieConfig) {
+          return new Response("Invalid CSRF token: Cookie config not enabled", {
+            status: 403,
+          });
         }
+
+        // Elysia cookies are proxy objects, we can directly access .value
+        const cookieObj = cookie[cookieKey] as any;
+        const secret = cookieObj.value ? String(cookieObj.value) : undefined;
 
         if (!secret) {
           return new Response("Invalid CSRF token", { status: 403 });
@@ -296,8 +291,12 @@ export const csrf = (options: CsrfOptions = {}) => {
           request,
         });
 
+        if (!tokenValue) {
+          return new Response("Invalid CSRF token", { status: 403 });
+        }
+
         // Verify token
-        if (!tokenValue || !verifyToken(secret, tokenValue)) {
+        if (!verifyToken(secret, tokenValue)) {
           return new Response("Invalid CSRF token", { status: 403 });
         }
       }

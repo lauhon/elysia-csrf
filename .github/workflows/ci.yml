@@ -1,8 +1,12 @@
 name: Build and Test
 
 on:
-  push:
   pull_request:
+    branches:
+      - "main"
+  push:
+    branches:
+      - "main"
 
 jobs:
   build:
@@ -22,4 +26,4 @@ jobs:
         run: bun install
 
       - name: Test
-        run: bun run test
+        run: bun test --randomize

@@ -1,6 +1,6 @@
 {
   "name": "elysia-csrf",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "CSRF protection plugin for Elysia with cookie-based token storage",
   "main": "src/index.ts",
   "module": "src/index.ts",
