@@ -23,7 +23,7 @@ function hash(str: string): string {
  * Generate a random string of specified length
  */
 function randomString(length: number): string {
-  const bytes = crypto.randomBytes(Math.ceil(length * 0.75));
+  const bytes = crypto.randomBytes(length);
   return bytes
     .toString("base64")
     .replace(PLUS_GLOBAL_REGEXP, "-")
@@ -42,7 +42,11 @@ function tokenize(secret: string, salt: string): string {
 /**
  * Verify if a given token is valid for a given secret.
  */
-function verifyToken(secret: string, token: string): boolean {
+function verifyToken(
+  secret: string,
+  token: string,
+  saltLength: number,
+): boolean {
   if (!secret || typeof secret !== "string") {
     return false;
   }
@@ -51,13 +55,11 @@ function verifyToken(secret: string, token: string): boolean {
     return false;
   }
 
-  const index = token.indexOf("-");
-
-  if (index === -1) {
+  if (token.length < saltLength + 1) {
     return false;
   }
 
-  const salt = token.slice(0, index);
+  const salt = token.slice(0, saltLength);
   const expected = tokenize(secret, salt);
 
   // Constant-time comparison
@@ -77,12 +79,15 @@ function verifyToken(secret: string, token: string): boolean {
  * Generate a random secret synchronously
  */
 function generateSecret(length: number = 18): string {
+  // Generate enough bytes to ensure we have at least 'length' characters
+  // after base64 encoding and removing padding
   const bytes = crypto.randomBytes(length);
   return bytes
     .toString("base64")
     .replace(PLUS_GLOBAL_REGEXP, "-")
     .replace(SLASH_GLOBAL_REGEXP, "_")
-    .replace(EQUAL_GLOBAL_REGEXP, "");
+    .replace(EQUAL_GLOBAL_REGEXP, "")
+    .slice(0, length);
 }
 
 type CookieOptions = {
@@ -133,27 +138,49 @@ export type CsrfOptions = {
   secret?: string;
 };
 
-/**
+/*
+ * getHeaderValue function to extract CSRF token from request headers
+ */
+function getHeaderValue(headers: any, key: string): string | undefined {
+  if (!headers) return undefined;
+  if (typeof headers.get === "function") {
+    // Headers is case-insensitive
+    return headers.get(key) ?? undefined;
+  }
+  const lower = key.toLowerCase();
+  // Support plain object style
+  return headers[key] ?? headers[lower] ?? undefined;
+}
+/*
  * Default value function to extract CSRF token from request
  */
 function defaultValue(context: any): string | undefined {
-  const { body, query, headers } = context;
+  const { body, query, headers, request } = context;
+
+  // Headers is a Headers object, use .get() method
+  const getHeader = (name: string) => {
+    if (typeof headers?.get === "function") {
+      return headers.get(name);
+    }
+    return headers?.[name];
+  };
 
   return (
     body?._csrf ||
     query?._csrf ||
-    headers["csrf-token"] ||
-    headers["xsrf-token"] ||
-    headers["x-csrf-token"] ||
-    headers["x-xsrf-token"]
+    getHeader("csrf-token") ||
+    getHeader("xsrf-token") ||
+    getHeader("x-csrf-token") ||
+    getHeader("x-xsrf-token")
   );
 }
 
 /**
  * Get cookie options with defaults
  */
+
 function getCookieOptions(
-  options: boolean | CookieOptions | undefined
+  options: boolean | CookieOptions | undefined,
 ): CookieOptions | undefined {
   if (options !== true && typeof options !== "object") {
     return undefined;
@@ -282,8 +309,8 @@ export const csrf = (options: CsrfOptions = {}) => {
           return new Response("Invalid CSRF token", { status: 403 });
         }
 
-        // Get token from request
-        const tokenValue = getValue({
+        // Get token from request using custom or default value function
+        let tokenValue = getValue({
           body,
           query,
           headers: request.headers,
@@ -291,14 +318,39 @@ export const csrf = (options: CsrfOptions = {}) => {
           request,
         });
 
+        // Fallback: parse directly from the raw request if body/parser hasn't populated yet
+        if (!tokenValue) {
+          try {
+            const ct = request.headers.get("content-type") || "";
+            // request.clone() so we don't consume the original stream
+            const clone = request.clone();
+
+            if (ct.includes("application/x-www-form-urlencoded")) {
+              const text = await clone.text();
+              const sp = new URLSearchParams(text);
+              tokenValue = sp.get("_csrf") ?? sp.get("csrf") ?? undefined;
+            } else if (ct.includes("application/json")) {
+              const text = await clone.text();
+              try {
+                const json = JSON.parse(text);
+                tokenValue = json?._csrf ?? json?.csrf ?? undefined;
+              } catch {
+                // ignore JSON parse errors
+              }
+            }
+          } catch {
+            // ignore read/clone errors
+          }
+        }
+
         if (!tokenValue) {
           return new Response("Invalid CSRF token", { status: 403 });
         }
 
         // Verify token
-        if (!verifyToken(secret, tokenValue)) {
+        if (!verifyToken(secret, tokenValue, saltLength)) {
           return new Response("Invalid CSRF token", { status: 403 });
         }
-      }
+      },
     );
 };
