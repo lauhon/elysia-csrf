@@ -19,7 +19,7 @@ describe("Elysia CSRF Plugin", () => {
             httpOnly: true,
             sameSite: "lax",
           },
-        })
+        }),
       )
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }));
 
@@ -49,7 +49,7 @@ describe("Elysia CSRF Plugin", () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: "message=test",
-      })
+      }),
     );
 
     expect(failRes.status).toBe(403);
@@ -72,7 +72,7 @@ describe("Elysia CSRF Plugin", () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: "_csrf=invalid-token&message=test",
-      })
+      }),
     );
 
     expect(invalidRes.status).toBe(403);
@@ -96,7 +96,7 @@ describe("Elysia CSRF Plugin", () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `_csrf=${token}&message=hello`,
-      })
+      }),
     );
 
     expect(successRes.status).toBe(200);
@@ -112,7 +112,7 @@ describe("Elysia CSRF Plugin", () => {
           value: ({ headers }) => {
             return headers.get("x-csrf-token") || headers.get("x-xsrf-token");
           },
-        })
+        }),
       )
       .get("/api/token", ({ csrfToken }) => ({ csrfToken: csrfToken() }))
       .post("/api/data", ({ body }) => ({
@@ -121,7 +121,7 @@ describe("Elysia CSRF Plugin", () => {
       }));
 
     const tokenRes = await app.handle(
-      new Request("http://localhost/api/token")
+      new Request("http://localhost/api/token"),
     );
     const cookies = tokenRes.headers.get("set-cookie");
     const { csrfToken: token } = (await tokenRes.json()) as {
@@ -137,7 +137,7 @@ describe("Elysia CSRF Plugin", () => {
           "X-CSRF-Token": token,
         },
         body: JSON.stringify({ key: "value" }),
-      })
+      }),
     );
 
     expect(successRes.status).toBe(200);
@@ -149,7 +149,7 @@ describe("Elysia CSRF Plugin", () => {
         csrf({
           cookie: true,
           ignoreMethods: ["GET", "HEAD", "OPTIONS", "TRACE"],
-        })
+        }),
       )
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
       .post("/submit", ({ body }) => ({ success: true, body }));
@@ -160,7 +160,7 @@ describe("Elysia CSRF Plugin", () => {
     const getRes = await app.handle(
       new Request("http://localhost/token", {
         headers: { Cookie: cookies || "" },
-      })
+      }),
     );
 
     expect(getRes.status).toBe(200);
@@ -179,7 +179,7 @@ describe("Elysia CSRF Plugin", () => {
           },
           saltLength: 16,
           secretLength: 32,
-        })
+        }),
       )
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }));
 
@@ -209,7 +209,7 @@ describe("Elysia CSRF Plugin", () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `_csrf=${token}`,
-      })
+      }),
     );
 
     const req2 = await app.handle(
@@ -220,7 +220,7 @@ describe("Elysia CSRF Plugin", () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `_csrf=${token}`,
-      })
+      }),
     );
 
     expect(req1.status).toBe(200);
@@ -243,7 +243,7 @@ describe("Elysia CSRF Plugin", () => {
               headers.get("x-xsrf-token")
             );
           },
-        })
+        }),
       )
       .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
       .post("/submit", ({ body }) => ({ success: true }));
@@ -260,7 +260,7 @@ describe("Elysia CSRF Plugin", () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `_csrf=${encodeURIComponent(token)}&data=test`,
-      })
+      }),
     );
 
     const headerRes = await app.handle(
@@ -272,7 +272,7 @@ describe("Elysia CSRF Plugin", () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ data: "test" }),
-      })
+      }),
     );
 
     expect(bodyRes.status).toBe(200);
@@ -314,7 +314,7 @@ describe("Elysia CSRF Plugin", () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `_csrf=${encodeURIComponent(token)}&message=hello`,
-      })
+      }),
     );
 
     expect(submitRes.status).toBe(200);
@@ -336,13 +336,13 @@ describe("Elysia CSRF Plugin", () => {
                 : headers["x-csrf-token"]) || body?._csrf
             );
           },
-        })
+        }),
       )
       .get("/api/csrf-token", ({ csrfToken }) => ({ token: csrfToken() }))
       .post("/api/data", ({ body }) => ({ success: true, received: body }));
 
     const tokenRes = await app.handle(
-      new Request("http://localhost/api/csrf-token")
+      new Request("http://localhost/api/csrf-token"),
     );
     const cookies = tokenRes.headers.get("set-cookie");
     const { token } = (await tokenRes.json()) as { token: string };
@@ -356,7 +356,7 @@ describe("Elysia CSRF Plugin", () => {
           "X-CSRF-Token": token,
         },
         body: JSON.stringify({ key: "value" }),
-      })
+      }),
     );
 
     expect(apiRes.status).toBe(200);
@@ -378,7 +378,7 @@ describe("Elysia CSRF Plugin", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: "test" }),
-      })
+      }),
     );
     expect(postRes.status).toBe(403);
   });
