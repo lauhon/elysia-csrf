@@ -42,7 +42,11 @@ function tokenize(secret: string, salt: string): string {
 /**
  * Verify if a given token is valid for a given secret.
  */
-function verifyToken(secret: string, token: string): boolean {
+function verifyToken(
+  secret: string,
+  token: string,
+  saltLength: number
+): boolean {
   if (!secret || typeof secret !== "string") {
     return false;
   }
@@ -51,13 +55,14 @@ function verifyToken(secret: string, token: string): boolean {
     return false;
   }
 
-  const index = token.indexOf("-");
-
-  if (index === -1) {
+  // The token format is: {salt}-{hash}
+  // where salt is exactly saltLength characters
+  // We need to check if there's a dash at the expected position
+  if (token.length < saltLength + 1 || token[saltLength] !== "-") {
     return false;
   }
 
-  const salt = token.slice(0, index);
+  const salt = token.slice(0, saltLength);
   const expected = tokenize(secret, salt);
 
   // Constant-time comparison
@@ -207,6 +212,9 @@ export const csrf = (options: CsrfOptions = {}) => {
     },
   })
     .derive({ as: "scoped" }, ({ cookie }) => {
+      // Cache the secret within this request context to avoid race conditions
+      let cachedSecret: string | undefined;
+
       // Helper to set cookie attributes
       const setCookieAttributes = (cookieValue: any) => {
         if (cookieConfig?.path) cookieValue.path = cookieConfig.path;
@@ -222,6 +230,11 @@ export const csrf = (options: CsrfOptions = {}) => {
 
       // Helper to get or create secret from cookie
       const getOrCreateSecret = (): string => {
+        // Return cached secret if available
+        if (cachedSecret) {
+          return cachedSecret;
+        }
+
         if (!cookieConfig) {
           throw new Error("CSRF: Cookie storage must be enabled");
         }
@@ -239,6 +252,8 @@ export const csrf = (options: CsrfOptions = {}) => {
           setCookieAttributes(cookieObj);
         }
 
+        // Cache the secret for this request context
+        cachedSecret = secret;
         return secret;
       };
 
@@ -296,7 +311,7 @@ export const csrf = (options: CsrfOptions = {}) => {
         }
 
         // Verify token
-        if (!verifyToken(secret, tokenValue)) {
+        if (!verifyToken(secret, tokenValue, saltLength)) {
           return new Response("Invalid CSRF token", { status: 403 });
         }
       }
