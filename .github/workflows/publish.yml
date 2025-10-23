@@ -40,6 +40,12 @@ jobs:
       - name: Test
         run: bun run test
 
+      - name: "Set version from tag"
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Setting version to $VERSION"
+          npm version $VERSION --no-git-tag-version --allow-same-version
+
       - name: "Publish"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
