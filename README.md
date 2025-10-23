@@ -1,10 +1,6 @@
-<div  style="display: flex; gap: 1rem; justify-content: center;">
+<div align="center">
 
-[![build](https://img.shields.io/github/actions/workflow/status/lauhon/elysia-csrf/ci.yml?branch=main&style=flat-square)](https://github.com/lauhon/elysia-csrf/actions)
-
-[![npm version](https://img.shields.io/npm/v/elysia-csrf.svg)](https://www.npmjs.com/package/elysia-csrf)
-
-[![license](https://img.shields.io/npm/l/elysia-csrf.svg)](https://github.com/lauhon/elysia-csrf/blob/main/LICENSE)
+[![build](https://img.shields.io/github/actions/workflow/status/lauhon/elysia-csrf/ci.yml?branch=main&style=flat-square)](https://github.com/lauhon/elysia-csrf/actions) [![npm version](https://img.shields.io/npm/v/elysia-csrf.svg)](https://www.npmjs.com/package/elysia-csrf) [![license](https://img.shields.io/npm/l/elysia-csrf.svg)](https://github.com/lauhon/elysia-csrf/blob/main/LICENSE)
 
 </div>
 
